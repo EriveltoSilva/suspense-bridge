@@ -11,7 +11,7 @@
 #include <NewPing.h>
 #include <LiquidCrystal_I2C.h>
 
-#define MAX_DISTANCE_FRONT 30
+#define MAX_DISTANCE_FRONT 100
 #define MAX_DISTANCE_BACK 30
 #define TIME_TO_CLOSE_BRIDGE 5000
 
@@ -49,8 +49,8 @@
 // x = 368.64
 
 //Recursos
-char mode = 'M';
-char modeAnt = 'M';
+char mode = 'A';
+char modeAnt = 'A';
 
 bool flagBarco = false;
 bool flagAlert = false;
@@ -89,8 +89,6 @@ void setup() {
   pinMode(MOTOR_BRIDGE_OPEN, OUTPUT);
   digitalWrite(MOTOR_BRIDGE_OPEN, LOW);
 
-  // pinMode(SWITCH_MODE, INPUT_PULLUP);
-  // pinMode(BUTTON_OPEN_CLOSE, INPUT_PULLUP);
   pinMode(LIMIT_BRIDGE_OPEN, INPUT_PULLUP);
   pinMode(LIMIT_BRIDGE_CLOSE, INPUT_PULLUP);
 
@@ -135,9 +133,15 @@ void loop() {
     tempoDelay = millis();
     lerSensores();
     printDataLCD(lcd);
+    Serial.println("FlagAbrindo:"+String(flagAbrindo));
+    Serial.println("FlagBarco:"+String(flagBarco));
+    if(mode == 'A' && flagAbrindo && flagBarco)
+      Serial.println("DEVE ABRIR");
+
   }
 
   if (mode == 'A') {
+    
     if (flagAbrindo && flagBarco) {
       if (isBridgeClose()) {
         modeRed();
@@ -152,7 +156,6 @@ void loop() {
         }
         stopBridge();
         flagAbrindo = false;
-        Serial.println("Solte o botão");
         Serial.println("## ponte aberta ##");
         printManualLCD(lcd, "     PONTE      ", "### ABERTA ###");
         turnOffAlarm();
@@ -171,13 +174,11 @@ void loop() {
       turnOnAlarm();
       Serial.println("FECHANDO...");
       printManualLCD(lcd, "     PONTE      ", "   FECHANDO     ");
-      while (!isBridgeOpen())
-        ;
+      while (!isBridgeClose());
       stopBridge();
       flagBarco = false;
       flagPassando = false;
       modeGreen();
-      Serial.println("Solte o botão");
       printManualLCD(lcd, "     PONTE      ", "### FECHADA ###");
       turnOffAlarm();
       delay(2000);
@@ -196,12 +197,12 @@ void lerSensores() {
   Serial.println("DistanciaTras:" + String(distanciaTras));
   Serial.println("----------------------------------------------\n");
 
-  if ((distanciaFrente > 15) && mode == 'A') {
+  if ((distanciaFrente > 30) && mode == 'A') {
     flagBarco = true;
     flagAlert = true;
     distanciaBarco = "NAVIO Á:" + String(distanciaFrente);
     modeAlert();
-  } else if ((distanciaFrente > 5) && mode == 'A') {
+  } else if ((distanciaFrente > 3) && mode == 'A') {
     flagBarco = true;
     flagAlert = false;
     distanciaBarco = "NAVIO Á:" + String(distanciaFrente);
@@ -217,7 +218,9 @@ void lerSensores() {
   Serial.println("LIMIT_CLOSE:" + String(digitalRead(LIMIT_BRIDGE_CLOSE)));
   Serial.println("LIMIT_OPEN:" + String(digitalRead(LIMIT_BRIDGE_OPEN)));
 
-  if (distanciaTras > 2 && flagBarco && mode == 'A') {
+  //if (distanciaTras > 2 && flagBarco && mode == 'A') {
+  if (distanciaTras > 2 && isBridgeOpen() && mode == 'A') {
+    Serial.println("NAVIO PASSANDO  ");
     distanciaBarco = "NAVIO PASSANDO  ";
     modeRed();
     flagPassando = true;
