@@ -11,6 +11,8 @@
 #include <NewPing.h>
 #include <LiquidCrystal_I2C.h>
 
+#define DEBUG false
+
 #define MAX_DISTANCE_FRONT 100
 #define MAX_DISTANCE_BACK 30
 #define TIME_TO_CLOSE_BRIDGE 5000
@@ -59,6 +61,8 @@ bool flagPassando = false;
 bool flagFechando = false;
 
 bool flagChangeMode = false;
+
+char status_semaforo = 'R';
 
 int distanciaFrente = 0;
 int distanciaTras = 0;
@@ -113,18 +117,21 @@ void setup() {
   lcd.init();
   lcd.backlight();
   lcd.setCursor(0, 0);
-  lcd.print(" UNIV.METODISTA");
+  lcd.print("##### ISPB #####");
   lcd.setCursor(0, 1);
   lcd.print(" PROJECTO FINAL");
   Serial.begin(9600);
   delay(2500);
   digitalWrite(BUZZER, LOW);
-
-  modeGreen();
+  if (isBridgeClose())
+    modeGreen();
+  else
+    modeRed();
 }
 
 
 void loop() {
+  receiveData();
   verifyMode();
   verifyClosing();
   readButton();
@@ -133,15 +140,11 @@ void loop() {
     tempoDelay = millis();
     lerSensores();
     printDataLCD(lcd);
-    Serial.println("FlagAbrindo:"+String(flagAbrindo));
-    Serial.println("FlagBarco:"+String(flagBarco));
-    if(mode == 'A' && flagAbrindo && flagBarco)
-      Serial.println("DEVE ABRIR");
-
+    sendData();
   }
 
   if (mode == 'A') {
-    
+
     if (flagAbrindo && flagBarco) {
       if (isBridgeClose()) {
         modeRed();
@@ -149,10 +152,8 @@ void loop() {
         turnOnAlarm();
         Serial.println("Abrindo, ha barco");
         printManualLCD(lcd, "     PONTE      ", "    ABRINDO     ");
-        while (!isBridgeOpen())
-        {
-          Serial.println("Abrindo...");
-          Serial.println("LIMIT_CLOSE:" + String(digitalRead(LIMIT_BRIDGE_CLOSE)));
+        while (!isBridgeOpen()) {
+          proccessingSending();
         }
         stopBridge();
         flagAbrindo = false;
@@ -174,7 +175,8 @@ void loop() {
       turnOnAlarm();
       Serial.println("FECHANDO...");
       printManualLCD(lcd, "     PONTE      ", "   FECHANDO     ");
-      while (!isBridgeClose());
+      while (!isBridgeClose())
+        ;
       stopBridge();
       flagBarco = false;
       flagPassando = false;
@@ -193,10 +195,6 @@ void lerSensores() {
   distanciaFrente = ultraFrente.ping_cm();
   distanciaTras = ultraTras.ping_cm();
 
-  Serial.println("DistanciaFrente:" + String(distanciaFrente));
-  Serial.println("DistanciaTras:" + String(distanciaTras));
-  Serial.println("----------------------------------------------\n");
-
   if ((distanciaFrente > 30) && mode == 'A') {
     flagBarco = true;
     flagAlert = true;
@@ -207,16 +205,15 @@ void lerSensores() {
     flagAlert = false;
     distanciaBarco = "NAVIO Á:" + String(distanciaFrente);
     flagAbrindo = true;
-  } else if ((distanciaFrente < 2) && digitalRead(LIMIT_BRIDGE_CLOSE) && mode == 'A') {
-    if (flagAlert) {
+  } else if ((distanciaFrente < 2) && flagAlert && mode == 'A') {
+    if (flagAbrindo)
+      modeRed();
+    else if (!flagAbrindo && isBridgeClose()) {
       flagAlert = false;
       flagBarco = false;
       modeGreen();
     }
   }
-
-  Serial.println("LIMIT_CLOSE:" + String(digitalRead(LIMIT_BRIDGE_CLOSE)));
-  Serial.println("LIMIT_OPEN:" + String(digitalRead(LIMIT_BRIDGE_OPEN)));
 
   //if (distanciaTras > 2 && flagBarco && mode == 'A') {
   if (distanciaTras > 2 && isBridgeOpen() && mode == 'A') {
@@ -225,6 +222,15 @@ void lerSensores() {
     modeRed();
     flagPassando = true;
     tempoBarco = millis();
+  }
+
+  if(DEBUG)
+  {
+  Serial.println("LIMIT_CLOSE:" + String(digitalRead(LIMIT_BRIDGE_CLOSE)));
+  Serial.println("LIMIT_OPEN:" + String(digitalRead(LIMIT_BRIDGE_OPEN)));
+  Serial.println("DistanciaFrente:" + String(distanciaFrente));
+  Serial.println("DistanciaTras:" + String(distanciaTras));
+  Serial.println("----------------------------------------");
   }
 }
 
@@ -243,7 +249,6 @@ void printDataLCD(LiquidCrystal_I2C lcd) {
     lcd.print("#   SEMAFORO   #");
     lcd.setCursor(0, 1);
     lcd.print(estadoSemaforo);
-    Serial.println(estadoSemaforo);
   }
 
   lcd.setCursor(15, 1);
@@ -278,9 +283,9 @@ void openBridge() {
   }
 }
 
-void closeBridge() {// 
-  if (!isBridgeOpen())// está fechado
-    digitalWrite(MOTOR_BRIDGE_OPEN, HIGH); // abrir
+void closeBridge() {                        //
+  if (!isBridgeOpen())                      // está fechado
+    digitalWrite(MOTOR_BRIDGE_OPEN, HIGH);  // abrir
   else {
     Serial.println("JÁ ESTÁ ABERTA!");
     stopBridge();
@@ -297,11 +302,11 @@ void testOpenBridge() {
   }
 }
 
-void testCloseBridge() {// 
-  if (!isBridgeClose())// está aberto
-    digitalWrite(MOTOR_BRIDGE_CLOSE, HIGH); // fechado
+void testCloseBridge() {                     //
+  if (!isBridgeClose())                      // está aberto
+    digitalWrite(MOTOR_BRIDGE_CLOSE, HIGH);  // fechado
   else {
-    Serial.println("JÁ ESTÁ FECHADO!"); // 
+    Serial.println("JÁ ESTÁ FECHADO!");  //
     stopBridge();
   }
 }
@@ -309,17 +314,28 @@ void testCloseBridge() {//
 bool isOpenBridgePress() {
   return analogRead(BUTTON_CHANGE_MODE_OPEN_CLOSE) > (VALUE_OPEN_CLOSE_BRIDGE);
 }
+void proccessingSending()
+{
+  if (millis() - tempoDelay > 500) {
+    tempoDelay = millis();
+    sendData();
+  }
+}
 
 void readButton() {
   if (mode == 'M') {
     if (isOpenBridgePress()) {
-      if (isBridgeOpen()) { // está aberta
+      if (isBridgeOpen()) {  // está aberta
         modeRed();
         testCloseBridge();
         turnOnAlarm();
         Serial.println("FECHANDO...");
         printManualLCD(lcd, "     PONTE      ", "   FECHANDO     ");
-        while (isOpenBridgePress() && !isBridgeClose());
+        while (isOpenBridgePress() && !isBridgeClose())
+        {
+          proccessingSending();
+        }
+          
         stopBridge();
         flagBarco = false;
         flagPassando = false;
@@ -330,43 +346,46 @@ void readButton() {
           ;
         turnOffAlarm();
         delay(2000);
-      } else if(isBridgeClose()){
-          modeRed();
-          testOpenBridge();
-          turnOnAlarm();
-          Serial.println("ABRINDO...");
-          printManualLCD(lcd, "     PONTE      ", "    ABRINDO     ");
-          while (isOpenBridgePress() && !isBridgeOpen());
-          stopBridge();
-          Serial.println("Solte o botão");
-          printManualLCD(lcd, "     PONTE      ", "### ABERTA ###");
-          while (isOpenBridgePress())
-            ;
-          turnOffAlarm();
-        }
-        else //no meio if(!isBridgeClose() && !isBridgeOpen())
+      } else if (isBridgeClose()) {
+        modeRed();
+        testOpenBridge();
+        turnOnAlarm();
+        Serial.println("ABRINDO...");
+        printManualLCD(lcd, "     PONTE      ", "    ABRINDO     ");
+        while (isOpenBridgePress() && !isBridgeOpen())
         {
-          modeRed();
-          testCloseBridge();
-          turnOnAlarm();
-          Serial.println("FECHANDO NO MEIO...");
-          printManualLCD(lcd, "     PONTE      ", "   FECHANDO     ");
-          while (isOpenBridgePress() && !isBridgeClose());
-          stopBridge();
-          flagBarco = false;
-          flagPassando = false;
-          modeGreen();
-          Serial.println("Solte o botão");
-          printManualLCD(lcd, "     PONTE      ", "### FECHADA ###");
-          while (isOpenBridgePress())
-            ;
-          turnOffAlarm();
-          delay(2000);
+          proccessingSending();
         }
-        
+        stopBridge();
+        Serial.println("Solte o botão");
+        printManualLCD(lcd, "     PONTE      ", "### ABERTA ###");
+        while (isOpenBridgePress())
+          ;
+        turnOffAlarm();
+      } else  //no meio if(!isBridgeClose() && !isBridgeOpen())
+      {
+        modeRed();
+        testCloseBridge();
+        turnOnAlarm();
+        Serial.println("FECHANDO NO MEIO...");
+        printManualLCD(lcd, "     PONTE      ", "   FECHANDO     ");
+        while (isOpenBridgePress() && !isBridgeClose())
+        {
+          proccessingSending();
+        }
+        stopBridge();
+        flagBarco = false;
+        flagPassando = false;
+        modeGreen();
+        Serial.println("Solte o botão");
+        printManualLCD(lcd, "     PONTE      ", "### FECHADA ###");
+        while (isOpenBridgePress())
+          ;
+        turnOffAlarm();
+        delay(2000);
       }
     }
-  
+  }
 }
 
 void stopBridge() {
@@ -390,6 +409,8 @@ void turnOffAlarm() {
 
 
 void verifyClosing() {
+  if (isBridgeOpen())
+    modeRed();
   if (flagFechando && !digitalRead(LIMIT_BRIDGE_CLOSE)) {
     flagFechando = false;
     stopBridge();
@@ -437,6 +458,7 @@ void modeAlert() {
     modeOff();
     turnOffAlarm();
   }
+  status_semaforo = 'A';
   aux = !aux;
 }
 
@@ -450,6 +472,7 @@ void modeGreen() {
   digitalWrite(led_amarelo_2, LOW);
   digitalWrite(led_vermelho_2, LOW);
   estadoSemaforo = "#### VERDE ####";
+  status_semaforo = 'G';
   turnOffAlarm();
 }
 
@@ -462,6 +485,7 @@ void modeYellow() {
   digitalWrite(led_verde_2, LOW);
   digitalWrite(led_amarelo_2, HIGH);
   digitalWrite(led_vermelho_2, LOW);
+  status_semaforo = 'Y';
   estadoSemaforo = "### AMARELO ###";
 }
 
@@ -475,6 +499,7 @@ void modeRed() {
   digitalWrite(led_amarelo_2, LOW);
   digitalWrite(led_vermelho_2, HIGH);
   estadoSemaforo = "## VERMELHO ##";
+  status_semaforo = 'R';
   turnOnAlarm();
 }
 
@@ -487,4 +512,76 @@ void modeOff() {
   digitalWrite(led_verde_2, LOW);
   digitalWrite(led_amarelo_2, LOW);
   digitalWrite(led_vermelho_2, LOW);
+}
+
+
+void sendData() {
+  // status_semaforo: A-alarme, Y-yellow, R-red, G-green,
+  // status_bridge: C-close, O-open,
+  //D*mode*status_semaforo*status_bridge*
+
+  char status_bridge = isBridgeClose()? 'C' : 'O';
+  bool closing = (flagAbrindo && flagBarco);
+  Serial.println("D*" + String(mode) + "*" + String(status_semaforo) + "*" + String(status_bridge) + "*"+String(distanciaFrente)+"*"+String(closing)+"*");
+}
+
+void receiveData() {
+  if (Serial.available()) {
+    while (Serial.available()) {
+      char rx = (char)Serial.read();
+      switch (rx) {
+        case 'B':processCommand();break;
+        case 'M': mode = (mode=='M')?'A':'M'; break;
+      }
+    }
+  }
+}
+
+void processCommand() {
+  if (mode == 'M') {
+    if (isBridgeOpen()) {  // está aberta
+      modeRed();
+      testCloseBridge();
+      turnOnAlarm();
+      Serial.println("FECHANDO...");
+      printManualLCD(lcd, "     PONTE      ", "   FECHANDO     ");
+      while (!isBridgeClose())
+        ;
+      stopBridge();
+      flagBarco = false;
+      flagPassando = false;
+      modeGreen();
+      printManualLCD(lcd, "     PONTE      ", "### FECHADA ###");
+      turnOffAlarm();
+      delay(2000);
+    } else if (isBridgeClose()) {
+      modeRed();
+      testOpenBridge();
+      turnOnAlarm();
+      Serial.println("ABRINDO...");
+      printManualLCD(lcd, "     PONTE      ", "    ABRINDO     ");
+      while (!isBridgeOpen())
+        ;
+      stopBridge();
+      Serial.println("Solte o botão");
+      printManualLCD(lcd, "     PONTE      ", "### ABERTA ###");
+      turnOffAlarm();
+    } else {  //no meio if(!isBridgeClose() && !isBridgeOpen())
+      modeRed();
+      testCloseBridge();
+      turnOnAlarm();
+      Serial.println("FECHANDO NO MEIO...");
+      printManualLCD(lcd, "     PONTE      ", "   FECHANDO     ");
+      while (!isBridgeClose())
+        ;
+      stopBridge();
+      flagBarco = false;
+      flagPassando = false;
+      modeGreen();
+      Serial.println("Solte o botão");
+      printManualLCD(lcd, "     PONTE      ", "### FECHADA ###");
+      turnOffAlarm();
+      delay(2000);
+    }
+  }
 }
