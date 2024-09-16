@@ -104,7 +104,7 @@
             this.btnRegiterUser.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnRegiterUser.Font = new System.Drawing.Font("Nirmala UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnRegiterUser.ForeColor = System.Drawing.Color.SpringGreen;
-            this.btnRegiterUser.Image = global::ControleDeReservatorio.Properties.Resources.Contact;
+            this.btnRegiterUser.Image = global::SuspensionBridge.Properties.Resources.Contact;
             this.btnRegiterUser.Location = new System.Drawing.Point(0, 174);
             this.btnRegiterUser.Name = "btnRegiterUser";
             this.btnRegiterUser.Size = new System.Drawing.Size(291, 59);
@@ -278,7 +278,7 @@
             // 
             // pictureBox1
             // 
-            this.pictureBox1.Image = global::ControleDeReservatorio.Properties.Resources.Usuario;
+            this.pictureBox1.Image = global::SuspensionBridge.Properties.Resources.Usuario;
             this.pictureBox1.Location = new System.Drawing.Point(92, 10);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(69, 78);
@@ -403,7 +403,7 @@
             // 
             // pb_TrafficLight
             // 
-            this.pb_TrafficLight.Image = global::ControleDeReservatorio.Properties.Resources.red;
+            this.pb_TrafficLight.Image = global::SuspensionBridge.Properties.Resources.red;
             this.pb_TrafficLight.Location = new System.Drawing.Point(98, 81);
             this.pb_TrafficLight.Name = "pb_TrafficLight";
             this.pb_TrafficLight.Size = new System.Drawing.Size(166, 206);
@@ -473,7 +473,7 @@
             // 
             // pb_TrafficLight2
             // 
-            this.pb_TrafficLight2.Image = global::ControleDeReservatorio.Properties.Resources.red;
+            this.pb_TrafficLight2.Image = global::SuspensionBridge.Properties.Resources.red;
             this.pb_TrafficLight2.Location = new System.Drawing.Point(596, 81);
             this.pb_TrafficLight2.Name = "pb_TrafficLight2";
             this.pb_TrafficLight2.Size = new System.Drawing.Size(172, 206);
