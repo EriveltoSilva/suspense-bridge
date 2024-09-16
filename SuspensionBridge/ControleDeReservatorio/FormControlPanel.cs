@@ -73,7 +73,7 @@ namespace ControleDeReservatorio
                     cbSerialPort.Enabled = false;
                     btnUpdateSerialPorts.Enabled = false;
                     pnl_serial.Visible = false;
-                    MessageBox.Show("Comunicação com os Ponte Estabelecida com Sucesso!", "Comunicação", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Comunicação com a Ponte Estabelecida com Sucesso!", "Comunicação", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch
                 {
