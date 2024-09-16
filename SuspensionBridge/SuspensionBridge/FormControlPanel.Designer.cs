@@ -70,6 +70,7 @@
             this.panel9 = new System.Windows.Forms.Panel();
             this.panel10 = new System.Windows.Forms.Panel();
             this.panel11 = new System.Windows.Forms.Panel();
+            this.lblTrafficState = new System.Windows.Forms.Label();
             this.panelMenu.SuspendLayout();
             this.panel3.SuspendLayout();
             this.pnl_serial.SuspendLayout();
@@ -468,6 +469,7 @@
             // 
             this.panel7.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(25)))), ((int)(((byte)(25)))));
             this.panel7.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel7.Controls.Add(this.lblTrafficState);
             this.panel7.Controls.Add(this.pb_TrafficLight2);
             this.panel7.Controls.Add(this.pb_TrafficLight);
             this.panel7.Controls.Add(this.label5);
@@ -482,7 +484,7 @@
             // pb_TrafficLight2
             // 
             this.pb_TrafficLight2.Image = global::SuspensionBridge.Properties.Resources.red;
-            this.pb_TrafficLight2.Location = new System.Drawing.Point(454, 303);
+            this.pb_TrafficLight2.Location = new System.Drawing.Point(526, 315);
             this.pb_TrafficLight2.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
             this.pb_TrafficLight2.Name = "pb_TrafficLight2";
             this.pb_TrafficLight2.Size = new System.Drawing.Size(197, 210);
@@ -493,10 +495,10 @@
             // pb_TrafficLight
             // 
             this.pb_TrafficLight.Image = global::SuspensionBridge.Properties.Resources.red;
-            this.pb_TrafficLight.Location = new System.Drawing.Point(161, 303);
+            this.pb_TrafficLight.Location = new System.Drawing.Point(122, 315);
             this.pb_TrafficLight.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
             this.pb_TrafficLight.Name = "pb_TrafficLight";
-            this.pb_TrafficLight.Size = new System.Drawing.Size(183, 210);
+            this.pb_TrafficLight.Size = new System.Drawing.Size(199, 210);
             this.pb_TrafficLight.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pb_TrafficLight.TabIndex = 17;
             this.pb_TrafficLight.TabStop = false;
@@ -579,6 +581,18 @@
             this.panel11.Name = "panel11";
             this.panel11.Size = new System.Drawing.Size(757, 182);
             this.panel11.TabIndex = 17;
+            // 
+            // lblTrafficState
+            // 
+            this.lblTrafficState.AutoSize = true;
+            this.lblTrafficState.Font = new System.Drawing.Font("Nirmala UI", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTrafficState.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(42)))), ((int)(((byte)(212)))), ((int)(((byte)(245)))));
+            this.lblTrafficState.Location = new System.Drawing.Point(375, 386);
+            this.lblTrafficState.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.lblTrafficState.Name = "lblTrafficState";
+            this.lblTrafficState.Size = new System.Drawing.Size(97, 25);
+            this.lblTrafficState.TabIndex = 6;
+            this.lblTrafficState.Text = "Vermelho";
             // 
             // FormControlPanel
             // 
@@ -666,6 +680,7 @@
         private System.Windows.Forms.Panel panel10;
         private System.Windows.Forms.Panel panel11;
         private System.Windows.Forms.Panel panel9;
+        private System.Windows.Forms.Label lblTrafficState;
     }
 }
 

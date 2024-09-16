@@ -160,24 +160,28 @@ namespace ControleDeReservatorio
                 if (dados[2] == "A")
                 {
                     lbl_traffic_light.Text = "ALERTA";
+                    lblTrafficState.Text = "ALERTA";
                     setImage("", pb_TrafficLight);
                     setImage("", pb_TrafficLight2);
                 }
                 else if(dados[2] == "Y")
                 {
                     lbl_traffic_light.Text = "AMARELO";
+                    lblTrafficState.Text = "AMARELO";
                     setImage("y", pb_TrafficLight);
                     setImage("y", pb_TrafficLight2);
                 }
                 else if (dados[2] == "R")
                 {
                     lbl_traffic_light.Text = "VERMELHO";
+                    lblTrafficState.Text = "VERMELHO";
                     setImage("r", pb_TrafficLight);
                     setImage("r", pb_TrafficLight2);
                 }
                 else if (dados[2] == "G")
                 {
                     lbl_traffic_light.Text = "VERDE";
+                    lblTrafficState.Text = "VERDE";
                     setImage("g", pb_TrafficLight);
                     setImage("g", pb_TrafficLight2);
                 }
